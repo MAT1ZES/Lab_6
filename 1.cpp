@@ -1,6 +1,5 @@
 ﻿#include <iostream>
 #include <string>
-#include <windows.h>
 #include <iomanip>
 #include <cstdlib>
 #include <ctime>
@@ -43,13 +42,6 @@ Driver availableDrivers[10] =
 
 const int NUM_DRIVERS = 10;
 
-void setupUkr()
-{
-    SetConsoleOutputCP(1251);
-    SetConsoleCP(1251);
-    setlocale(LC_ALL, "Ukrainian");
-    srand(time(0));
-}
 
 // робимо логін нечутливим до регістру
 string toLower(string s)
@@ -112,24 +104,33 @@ bool login(const User& u)
     return false;
 }
 
-// --- Перевірка валідності адреси (fix спецсимволів та пустих полів) ---
-bool isValidAddress(const string& address)
-{
+// оформлення замовлення
+// Допоміжна функція для перевірки коректності адреси
+// Виправляє OrderSpecialSymbolsTest та OrderEmptyInputTest
+bool isValidAddress(const string& address) {
+    // 1. Перевірка на порожність
     if (address.empty()) return false;
 
-    bool hasLetters = false;
-
-    for (char c : address)
-    {
-        if (c == '@' || c == '#' || c == '$' || c == '%') return false;
-
-        if (isalnum(c)) hasLetters = true;
+    bool hasLettersOrDigits = false;
+    
+    for (char c : address) {
+        // 2. Перевірка на заборонені спецсимволи (як у тесті з '@@@')
+        // Можна розширити список, якщо треба
+        if (c == '@' || c == '#' || c == '$' || c == '%') {
+            return false; 
+        }
+        
+        // 3. Перевірка, чи є хоча б одна літера або цифра 
+        // (щоб користувач не ввів просто пробіли або крапки)
+        if (isalnum(c)) { 
+            hasLettersOrDigits = true;
+        }
     }
-
-    return hasLetters;
+    
+    // Адреса валідна тільки якщо немає заборонених знаків І є хоча б одна буква/цифра
+    return hasLettersOrDigits;
 }
 
-// замовлення (оновлено!)
 Order makeOrder()
 {
     Order o;
