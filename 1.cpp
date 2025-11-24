@@ -6,6 +6,7 @@
 #include <algorithm>
 using namespace std;
 
+// Структура з даними про водія
 struct Driver
 {
     string name;
@@ -13,11 +14,13 @@ struct Driver
     double rating;
 };
 
+// Структура користувача (логін, пароль)
 struct User
 {
     string name, login, password;
 };
 
+// Структура замовлення
 struct Order
 {
     string from, to, driver, car;
@@ -26,6 +29,7 @@ struct Order
     int travelTime = 0;
 };
 
+// Масив доступних водіїв
 Driver availableDrivers[10] =
 {
     {"Петро", "Renault Logan (KA2668LI)", 4.7},
@@ -43,32 +47,37 @@ Driver availableDrivers[10] =
 const int NUM_DRIVERS = 10;
 
 
-// робимо логін нечутливим до регістру
+// Робимо логін нечутливим до регістру
 string toLower(string s)
 {
     for (char& c : s) c = tolower(c);
     return s;
 }
 
-// реєстрація + перевірка порожніх полів (fix RegistrationEmptyFieldsTest)
+
+// --- Реєстрація користувача ---
+// Додаємо перевірку на порожні поля (тест RegistrationEmptyFieldsTest)
 User registration()
 {
     User u;
 
     cout << "=== Реєстрація ===\n";
 
+    // Імʼя
     do {
         cout << "Ім'я: ";
         getline(cin, u.name);
         if (u.name.empty()) cout << "Поля не можуть бути порожніми!\n";
     } while (u.name.empty());
 
+    // Логін
     do {
         cout << "Логін: ";
         getline(cin, u.login);
         if (u.login.empty()) cout << "Поля не можуть бути порожніми!\n";
     } while (u.login.empty());
 
+    // Пароль
     do {
         cout << "Пароль: ";
         getline(cin, u.password);
@@ -77,13 +86,15 @@ User registration()
 
     cout << "\nРеєстрація успішна!\n\n";
 
-    // зберігаємо логін у нижньому регістрі
+    // Зберігаємо логін у нижньому регістрі (для тесту LoginCaseSensitiveTest)
     u.login = toLower(u.login);
 
     return u;
 }
 
-// авторизація (fix LoginCaseSensitiveTest)
+
+// --- Авторизація ---
+// Порівнюємо логіни без врахування регістру
 bool login(const User& u)
 {
     string l, p;
@@ -104,33 +115,29 @@ bool login(const User& u)
     return false;
 }
 
-// оформлення замовлення
-// Допоміжна функція для перевірки коректності адреси
-// Виправляє OrderSpecialSymbolsTest та OrderEmptyInputTest
-bool isValidAddress(const string& address) {
-    // 1. Перевірка на порожність
+
+// --- Перевірка адреси (виправляє тести OrderSpecialSymbolsTest та OrderEmptyInputTest) ---
+bool isValidAddress(const string& address)
+{
     if (address.empty()) return false;
 
     bool hasLettersOrDigits = false;
-    
-    for (char c : address) {
-        // 2. Перевірка на заборонені спецсимволи (як у тесті з '@@@')
-        // Можна розширити список, якщо треба
-        if (c == '@' || c == '#' || c == '$' || c == '%') {
-            return false; 
-        }
-        
-        // 3. Перевірка, чи є хоча б одна літера або цифра 
-        // (щоб користувач не ввів просто пробіли або крапки)
-        if (isalnum(c)) { 
+
+    for (char c : address)
+    {
+        // Заборонені символи (@ @ # $ %)
+        if (c == '@' || c == '#' || c == '$' || c == '%')
+            return false;
+
+        // Має бути хоч 1 буква або цифра
+        if (isalnum(c))
             hasLettersOrDigits = true;
-        }
     }
-    
-    // Адреса валідна тільки якщо немає заборонених знаків І є хоча б одна буква/цифра
     return hasLettersOrDigits;
 }
 
+
+// --- Оформлення замовлення ---
 Order makeOrder()
 {
     Order o;
@@ -139,7 +146,7 @@ Order makeOrder()
 
     cout << "\n Оформлення замовлення \n";
 
-    // адреса ЗВІДКИ
+    // Введення адреси "звідки"
     do {
         cout << "Адреса звідки: ";
         getline(cin, o.from);
@@ -149,7 +156,7 @@ Order makeOrder()
 
     } while (!isValidAddress(o.from));
 
-    // адреса КУДИ
+    // Введення адреси "куди"
     do {
         cout << "Адреса куди: ";
         getline(cin, o.to);
@@ -167,7 +174,7 @@ Order makeOrder()
 
     } while (o.to.empty());
 
-    // рандомні водії
+    // Перемішуємо список водіїв
     int availableCount = 1 + rand() % NUM_DRIVERS;
 
     for (int i = 0; i < NUM_DRIVERS - 1; ++i)
@@ -176,9 +183,10 @@ Order makeOrder()
         swap(availableDrivers[i], availableDrivers[j]);
     }
 
+    // Виводимо доступних водіїв
     cout << "\nДоступні Водії ( " << availableCount << " )\n";
-    cout << left << setw(3) << "№" << setw(15) << "Водій" << setw(30)
-        << "Авто" << "Рейтинг\n";
+    cout << left << setw(3) << "№" << setw(15) << "Водій"
+        << setw(30) << "Авто" << "Рейтинг\n";
 
     for (int i = 0; i < availableCount; i++)
     {
@@ -188,6 +196,7 @@ Order makeOrder()
             << availableDrivers[i].rating << "\n";
     }
 
+    // Вибір водія
     while (!validChoice)
     {
         cout << "Оберіть номер водія: ";
@@ -205,10 +214,9 @@ Order makeOrder()
         cin.ignore(1000, '\n');
     }
 
-    // авто генерація параметрів
+    // Генерація відстані, часу та ціни
     o.distance = 2 + rand() % 10;
     o.travelTime = 5 + rand() % 15;
-
     o.price = o.distance * 25 + o.travelTime * 1.5;
 
     cout << "\nВаше замовлення підтверджено!\n";
@@ -216,7 +224,10 @@ Order makeOrder()
     return o;
 }
 
-// --- payment() з тестами (валідність картки + баланс) ---
+
+// --- Оплата ---
+// Перевіряємо номер картки (PaymentInvalidCardNumberTest)
+// Перевіряємо баланс картки (PaymentInsufficientFundsTest)
 void payment(double price)
 {
     int method;
@@ -225,6 +236,7 @@ void payment(double price)
     cout << "Сума: " << price << " грн\n";
     cout << "1 - Картка\n2 - Готівка\n";
 
+    // Вибір способу оплати
     while (!(cin >> method) || (method != 1 && method != 2))
     {
         cout << "Помилка! Введіть 1 або 2: ";
@@ -232,13 +244,14 @@ void payment(double price)
         cin.ignore(1000, '\n');
     }
 
-    // Картка
+    // Оплата карткою
     if (method == 1)
     {
         string card;
         cout << "Номер картки (16 цифр): ";
         cin >> card;
 
+        // Перевірка довжини та символів
         bool ok = (card.length() == 16);
         for (char c : card)
             if (!isdigit(c)) ok = false;
@@ -249,6 +262,7 @@ void payment(double price)
             return;
         }
 
+        // Перевірка балансу
         double balance;
         cout << "Баланс картки: ";
         cin >> balance;
@@ -263,6 +277,7 @@ void payment(double price)
     }
     else
     {
+        // Оплата готівкою
         double cash;
         cout << "Готівка: ";
         cin >> cash;
@@ -279,7 +294,8 @@ void payment(double price)
     cin.ignore(1000, '\n');
 }
 
-// оцінка
+
+// --- Оцінка поїздки ---
 void rating()
 {
     int score;
@@ -301,18 +317,20 @@ void rating()
     cout << "Дякуємо за відгук!\n";
 }
 
+
+// --- Головна функція ---
 int main()
 {
-    setupUkr();
+    setupUkr(); // Функція налаштування укр. мови (має бути в іншому файлі)
 
     cout << "=== ДОДАТОК ТАКСІ ===\n";
 
-    User user = registration();
-    if (!login(user)) return 0;
+    User user = registration(); // Реєстрація
+    if (!login(user)) return 0; // Авторизація
 
-    Order order = makeOrder();
-    payment(order.price);
-    rating();
+    Order order = makeOrder();  // Оформлення поїздки
+    payment(order.price);       // Оплата
+    rating();                   // Відгук
 
     cout << "\nДякуємо, " << user.name << "!\n";
 }
