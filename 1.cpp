@@ -2,17 +2,16 @@
 #include <string>
 #include <windows.h>
 #include <iomanip>
-#include <cstdlib>   // для rand() і srand()
-#include <ctime>     // для time()
-#include <sstream>   
-#include <algorithm> // Для std::swap
+#include <cstdlib>
+#include <ctime>
+#include <algorithm>
 using namespace std;
 
 struct Driver
 {
     string name;
     string car;
-    double rating; // Рейтинг
+    double rating;
 };
 
 struct User
@@ -24,10 +23,9 @@ struct Order
 {
     string from, to, driver, car;
     double price = 0.00;
-    double distance = 0;  // км
-    int travelTime = 0;   // хв
+    double distance = 0;
+    int travelTime = 0;
 };
-
 
 Driver availableDrivers[10] =
 {
@@ -43,7 +41,7 @@ Driver availableDrivers[10] =
     {"Тетяна", "Nissan Qashqai (NO7788OP)", 5.0}
 };
 
-const int NUM_DRIVERS = 10; // rонстанта для розміру масиву
+const int NUM_DRIVERS = 10;
 
 void setupUkr()
 {
@@ -53,35 +51,85 @@ void setupUkr()
     srand(time(0));
 }
 
-// реєстрація користувача
+// робимо логін нечутливим до регістру
+string toLower(string s)
+{
+    for (char& c : s) c = tolower(c);
+    return s;
+}
+
+// реєстрація + перевірка порожніх полів (fix RegistrationEmptyFieldsTest)
 User registration()
 {
     User u;
+
     cout << "=== Реєстрація ===\n";
-    cout << "Ім'я: "; getline(cin, u.name);
-    cout << "Логін: "; getline(cin, u.login);
-    cout << "Пароль: "; getline(cin, u.password);
+
+    do {
+        cout << "Ім'я: ";
+        getline(cin, u.name);
+        if (u.name.empty()) cout << "Поля не можуть бути порожніми!\n";
+    } while (u.name.empty());
+
+    do {
+        cout << "Логін: ";
+        getline(cin, u.login);
+        if (u.login.empty()) cout << "Поля не можуть бути порожніми!\n";
+    } while (u.login.empty());
+
+    do {
+        cout << "Пароль: ";
+        getline(cin, u.password);
+        if (u.password.empty()) cout << "Поля не можуть бути порожніми!\n";
+    } while (u.password.empty());
+
     cout << "\nРеєстрація успішна!\n\n";
+
+    // зберігаємо логін у нижньому регістрі
+    u.login = toLower(u.login);
+
     return u;
 }
 
-// авторизація
+// авторизація (fix LoginCaseSensitiveTest)
 bool login(const User& u)
 {
     string l, p;
+
     cout << "=== Вхід ===\n";
-    cout << "Логін: "; getline(cin, l);
-    cout << "Пароль: "; getline(cin, p);
-    if (l == u.login && p == u.password)
+    cout << "Логін: ";
+    getline(cin, l);
+    cout << "Пароль: ";
+    getline(cin, p);
+
+    if (toLower(l) == u.login && p == u.password)
     {
         cout << "\nАвторизація успішна!\n";
         return true;
     }
+
     cout << "Помилка входу!\n";
     return false;
 }
 
-// оформлення замовлення
+// --- Перевірка валідності адреси (fix спецсимволів та пустих полів) ---
+bool isValidAddress(const string& address)
+{
+    if (address.empty()) return false;
+
+    bool hasLetters = false;
+
+    for (char c : address)
+    {
+        if (c == '@' || c == '#' || c == '$' || c == '%') return false;
+
+        if (isalnum(c)) hasLetters = true;
+    }
+
+    return hasLetters;
+}
+
+// замовлення (оновлено!)
 Order makeOrder()
 {
     Order o;
@@ -89,149 +137,174 @@ Order makeOrder()
     bool validChoice = false;
 
     cout << "\n Оформлення замовлення \n";
-    cout << "Адреса звідки: "; getline(cin, o.from);
-    cout << "Адреса куди: "; getline(cin, o.to);
 
-    //рандомно визначаємо кількість доступних водіїв (від 1 до 10)
+    // адреса ЗВІДКИ
+    do {
+        cout << "Адреса звідки: ";
+        getline(cin, o.from);
+
+        if (!isValidAddress(o.from))
+            cout << "Помилка! Невірна адреса.\n";
+
+    } while (!isValidAddress(o.from));
+
+    // адреса КУДИ
+    do {
+        cout << "Адреса куди: ";
+        getline(cin, o.to);
+
+        if (!isValidAddress(o.to))
+        {
+            cout << "Помилка! Невірна адреса.\n";
+            o.to = "";
+        }
+        else if (o.to == o.from)
+        {
+            cout << "Адреси не можуть збігатися!\n";
+            o.to = "";
+        }
+
+    } while (o.to.empty());
+
+    // рандомні водії
     int availableCount = 1 + rand() % NUM_DRIVERS;
 
-    // перемішуємо масив, щоб вибір був випадковим 
     for (int i = 0; i < NUM_DRIVERS - 1; ++i)
     {
         int j = i + rand() % (NUM_DRIVERS - i);
         swap(availableDrivers[i], availableDrivers[j]);
     }
-    cout << "\nДоступні Водії та Авто (Кількість: " << availableCount << ")\n";
-    cout << left << setw(3) << "№" << setw(15) << "Водій" << setw(30) << "Авто" << "Рейтинг\n";
 
-    for (int i = 0; i < availableCount; ++i)
+    cout << "\nДоступні Водії ( " << availableCount << " )\n";
+    cout << left << setw(3) << "№" << setw(15) << "Водій" << setw(30)
+        << "Авто" << "Рейтинг\n";
+
+    for (int i = 0; i < availableCount; i++)
     {
         cout << left << setw(3) << i + 1
             << setw(15) << availableDrivers[i].name
             << setw(30) << availableDrivers[i].car
-            << fixed << setprecision(1) << availableDrivers[i].rating << "\n";
+            << availableDrivers[i].rating << "\n";
     }
 
     while (!validChoice)
     {
-        cout << "Оберіть номер водія (1-" << availableCount << "): ";
-        if (cin >> choice)
+        cout << "Оберіть номер водія: ";
+        if (cin >> choice && choice >= 1 && choice <= availableCount)
         {
-            if (choice >= 1 && choice <= availableCount)
-            {
-
-                // встановлення обраного водія та авто з перемішаного масиву
-                o.driver = availableDrivers[choice - 1].name;
-                o.car = availableDrivers[choice - 1].car;
-                validChoice = true;
-            }
-            else
-            {
-                cout << "Невірний номер. Будь ласка, введіть число від 1 до " << availableCount << ".\n";
-            }
+            o.driver = availableDrivers[choice - 1].name;
+            o.car = availableDrivers[choice - 1].car;
+            validChoice = true;
         }
-        else //очищення буфера
+        else
         {
-            cout << "Некоректне введення. Спробуйте ще раз.\n";
+            cout << "Невірний вибір!\n";
             cin.clear();
-            string dummy;
-            getline(cin, dummy);
         }
+        cin.ignore(1000, '\n');
     }
-    cin.ignore(); // очищення буфера після cin >> choice
 
-    // автоматично генеруємо відстань і час
-    o.distance = 2 + rand() % 10;          // 2–11 км
-    o.travelTime = 5 + rand() % 15;        // 5–20 хв
+    // авто генерація параметрів
+    o.distance = 2 + rand() % 10;
+    o.travelTime = 5 + rand() % 15;
 
-    // розрахунок вартості
-    double costPerKm = 25.0;
-    double costPerMin = 1.5;
-    o.price = (o.distance * costPerKm) + (o.travelTime * costPerMin);
+    o.price = o.distance * 25 + o.travelTime * 1.5;
 
     cout << "\nВаше замовлення підтверджено!\n";
-    cout << "Водій: " << o.driver << "\n";
-    cout << "Авто: " << o.car << "\n";
-    cout << "Відстань: " << o.distance << " км\n";
-    cout << "Час у дорозі: " << o.travelTime << " хв\n";
-    cout << fixed << setprecision(2);
-    cout << "Орієнтовна вартість: " << o.price << " грн\n";
+
     return o;
 }
 
+// --- payment() з тестами (валідність картки + баланс) ---
 void payment(double price)
 {
     int method;
-    cout << "\n Оплата \n";
-    cout << "Сума до сплати: " << fixed << setprecision(2) << price << " грн\n";
-    cout << "Оберіть спосіб оплати:\n1 - Картка\n2 - Готівка\nВаш вибір: ";
+
+    cout << "\n=== Оплата ===\n";
+    cout << "Сума: " << price << " грн\n";
+    cout << "1 - Картка\n2 - Готівка\n";
 
     while (!(cin >> method) || (method != 1 && method != 2))
     {
-        cout << "Невірний вибір! Оберіть 1 або 2: ";
+        cout << "Помилка! Введіть 1 або 2: ";
         cin.clear();
-        string dummy;
-        getline(cin, dummy);
+        cin.ignore(1000, '\n');
     }
 
+    // Картка
     if (method == 1)
     {
-        cout << "Оплата карткою успішна.\n";
-    }
-    else if (method == 2)
-    {
-        double cash;
-        cout << "Введіть суму, яку ви даєте: ";
+        string card;
+        cout << "Номер картки (16 цифр): ";
+        cin >> card;
 
-        while (!(cin >> cash) || cash <= 0)
-        {
-            cout << "Некоректна сума. Введіть додатне число: ";
-            cin.clear();
-            string dummy;
-            getline(cin, dummy);
-        }
+        bool ok = (card.length() == 16);
+        for (char c : card)
+            if (!isdigit(c)) ok = false;
 
-        if (cash < price)
+        if (!ok)
         {
-            cout << "Недостатньо коштів! Оплата не виконана.\n";
-            cin.ignore();
+            cout << "Некоректний номер картки!\n";
             return;
         }
 
-        double change = cash - price;
-        cout << "Оплата готівкою прийнята.\n";
-        cout << "Ваша решта: " << fixed << setprecision(2) << change << " грн\n";
+        double balance;
+        cout << "Баланс картки: ";
+        cin >> balance;
+
+        if (balance < price)
+        {
+            cout << "Недостатньо коштів!\n";
+            return;
+        }
+
+        cout << "Оплата карткою успішна.\n";
+    }
+    else
+    {
+        double cash;
+        cout << "Готівка: ";
+        cin >> cash;
+
+        if (cash < price)
+        {
+            cout << "Недостатньо коштів!\n";
+            return;
+        }
+
+        cout << "Решта: " << cash - price << " грн\n";
     }
 
-    cin.ignore();
+    cin.ignore(1000, '\n');
 }
 
-
-// оцінка поїздки
+// оцінка
 void rating()
 {
     int score;
-    string comment;
-    cout << "\n Оцінка поїздки \n";
-    cout << "Оцінка (1–5): ";
+    cout << "\nОцінка (1–5): ";
 
     while (!(cin >> score) || score < 1 || score > 5)
     {
-        cout << "Невірний діапазон. Введіть оцінку від 1 до 5: ";
+        cout << "Помилка! Введіть 1–5: ";
         cin.clear();
-        string dummy;
-        getline(cin, dummy);
+        cin.ignore(1000, '\n');
     }
 
-    cin.ignore();
-    cout << "Коментар: "; getline(cin, comment);
-    cout << "Дякуємо за ваш відгук!\n";
+    cin.ignore(1000, '\n');
+
+    string comment;
+    cout << "Коментар: ";
+    getline(cin, comment);
+
+    cout << "Дякуємо за відгук!\n";
 }
 
 int main()
 {
     setupUkr();
-    cout << " ДОДАТОК ТАКСІ\n";
+
+    cout << "=== ДОДАТОК ТАКСІ ===\n";
 
     User user = registration();
     if (!login(user)) return 0;
@@ -240,6 +313,5 @@ int main()
     payment(order.price);
     rating();
 
-    cout << "\nДякуємо, " << user.name << ", що скористалися нашим сервісом!\n";
-    return 0;
+    cout << "\nДякуємо, " << user.name << "!\n";
 }
