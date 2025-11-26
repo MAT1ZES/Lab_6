@@ -236,7 +236,6 @@ void payment(double price)
     cout << "Сума: " << price << " грн\n";
     cout << "1 - Картка\n2 - Готівка\n";
 
-    // Вибір способу оплати
     while (!(cin >> method) || (method != 1 && method != 2))
     {
         cout << "Помилка! Введіть 1 або 2: ";
@@ -244,84 +243,66 @@ void payment(double price)
         cin.ignore(1000, '\n');
     }
 
-    // Оплата карткою
+    // ======= ОПЛАТА КАРТКОЮ =======
     if (method == 1)
     {
-        string card;
-        cout << "Номер картки (16 цифр): ";
-        cin >> card;
+        string cardNumber;
+        cout << "Введіть номер картки (16 цифр): ";
+        cin >> cardNumber;
 
-        // Перевірка довжини та символів
-        bool ok = (card.length() == 16);
-        for (char c : card)
-            if (!isdigit(c)) ok = false;
-
-        if (!ok)
+        // Валідація номера картки (Тест 3)
+        if (cardNumber.length() != 16  != all_of(cardNumber.begin(), cardNumber.end(), ::isdigit))
         {
-            cout << "Некоректний номер картки!\n";
+            cout << "Некоректний номер картки! Додавання неможливе.\n";
             return;
         }
 
-        // Перевірка балансу
-        double balance;
-        cout << "Баланс картки: ";
-        cin >> balance;
+        // Перевірка балансу (Тест 2)
+        double cardBalance;
+        cout << "Введіть баланс картки: ";
+        cin >> cardBalance;
 
-        if (balance < price)
+        if (cardBalance < price)
         {
             cout << "Недостатньо коштів!\n";
+            cout << "Оберіть інший спосіб оплати.\n";
             return;
         }
 
         cout << "Оплата карткою успішна.\n";
+        return;
     }
-    else
+
+    // ======= ОПЛАТА ГОТІВКОЮ =======
+    else if (method == 2)
     {
-        // Оплата готівкою
         double cash;
-        cout << "Готівка: ";
-        cin >> cash;
+        cout << "Введіть суму, яку ви даєте: ";
+
+        while (!(cin >> cash) || cash <= 0)
+        {
+            cout << "Некоректна сума. Введіть додатне число: ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
 
         if (cash < price)
         {
-            cout << "Недостатньо коштів!\n";
+            cout << "Недостатньо коштів! Оплата не виконана.\n";
             return;
         }
 
-        cout << "Решта: " << cash - price << " грн\n";
+        double change = cash - price;
+        cout << "Оплата готівкою прийнята.\n";
+        cout << "Ваша решта: " << fixed << setprecision(2) << change << " грн\n";
     }
-
-    cin.ignore(1000, '\n');
-}
-
-
-// --- Оцінка поїздки ---
-void rating()
-{
-    int score;
-    cout << "\nОцінка (1–5): ";
-
-    while (!(cin >> score) || score < 1 || score > 5)
-    {
-        cout << "Помилка! Введіть 1–5: ";
-        cin.clear();
-        cin.ignore(1000, '\n');
-    }
-
-    cin.ignore(1000, '\n');
-
-    string comment;
-    cout << "Коментар: ";
-    getline(cin, comment);
-
-    cout << "Дякуємо за відгук!\n";
 }
 
 
 // --- Головна функція ---
 int main()
 {
-    setupUkr(); // Функція налаштування укр. мови (має бути в іншому файлі)
+   
 
     cout << "=== ДОДАТОК ТАКСІ ===\n";
 
@@ -330,7 +311,7 @@ int main()
 
     Order order = makeOrder();  // Оформлення поїздки
     payment(order.price);       // Оплата
-    rating();                   // Відгук
+    
 
     cout << "\nДякуємо, " << user.name << "!\n";
 }
